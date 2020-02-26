@@ -4,5 +4,105 @@
 
 <div class="text-center">
     <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    <div>
+        <div id="player"></div>
+    </div>
 </div>
+
+<script src="~/js/signalr/dist/browser/signalr.js"></script>
+<script src="~/js/chat.js"></script>
+
+<script type="text/javascript">
+    var player;
+    var playItems = [];
+
+    function onStateChange(event) {
+        //event.data 返回現在影片的狀態 ( -1 尚未開始、0 結束、1 正在播放、2 暫停 )
+        if (event.data === 0) {
+            playNextVideo();
+        }
+        else if (event.data === -1 && playItems.length > 0) {
+            player.playVideo();
+        }
+    }
+
+    function onPlayerReady() {
+        console.log('onPlayerReady');
+
+        player.playVideo();
+    }
+
+    function onYouTubeIframeAPIReady() {
+        console.log('onYouTubeIframeAPIReady');
+
+        player = new YT.Player('player', {
+            height: '390',
+            width: '640',
+            videoId: '6Duo89XuYIM',
+            playerVars: {
+                autoplay: 1,
+                controls: 0
+            },
+            events: {
+                'onReady': onPlayerReady,
+                'onStateChange': onStateChange
+            }
+        });
+    }
+
+    function playNextVideo() {
+        if (playItems.length > 0) {
+            let vid = playItems.shift();
+
+            changeVideo(vid);
+        }
+    }
+
+    function addVideo(videoId) {
+        playItems.push(videoId);
+
+        if (playItems.length === 1 && (player.getPlayerState() === -1 || player.getPlayerState() === 0)) {
+            playNextVideo();
+        }
+    }
+
+    function insertVideo(videoId) {
+        playItems.splice(0, 0, videoId);
+
+        if (playItems.length === 1 && (player.getPlayerState() === -1 || player.getPlayerState() === 0)) {
+            playNextVideo();
+        }
+    }
+
+    function changeVideo(videoId) {
+        console.log('changeVideo', videoId);
+
+        player.loadVideoById(videoId);
+    }
+
+    function getVideoId(u) {
+        var v, vid;
+
+        if (u.indexOf('?v=') != -1) {
+            v = u.split('?v=');
+
+            if (v[1].indexOf('&') != -1) {
+                vid = v[1].split('&')[0];
+            } else {
+                vid = v[1];
+            }
+
+            return vid;
+        }
+        else if (u.indexOf('https://youtu.be/') != -1) {
+            vid = u.replace('https://youtu.be/', '');
+
+            return vid;
+        }
+        else {
+            return u;
+        }
+    }
+</script>
+
+<script src="https://www.youtube.com/iframe_api"></script>
