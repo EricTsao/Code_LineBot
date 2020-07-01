@@ -2,6 +2,10 @@
 using Line.Messaging.Webhooks;
 using LineBot.Hubs;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -37,6 +41,8 @@ namespace LineBot.Models
 
                             //使用者Id
                             var userId = ev.Source.UserId;
+                            
+                            await _hubContext.Clients.All.SendAsync("ShowLog", $"ChannelId: {channelId}, UserId: {userId}, ReplyToken: {ev.ReplyToken} Msg : {textMessage.Text}");
 
                             if (textMessage.Text == "2020")
                             {
@@ -172,13 +178,33 @@ namespace LineBot.Models
 
                         break;
                 }
+
+                await _hubContext.Clients.All.SendAsync("ShowLog", $"ReplyMessageAsync: Token: {ev.ReplyToken}, Msg:{JsonConvert.SerializeObject(result, new MyCamelCaseJsonSerializerSettings())}");
+                await _hubContext.Clients.All.SendAsync("ShowLog", $"ReplyMessageAsync Before");
+
+                if (result != null && result.Count > 0)
+                {
+                    var response = _messagingClient.ReplyMessageWithResponseAsync(ev.ReplyToken, result).Result;
+                    
+                    await _hubContext.Clients.All.SendAsync("ShowLog", $"Response: {response.Content.ReadAsStringAsync().Result}");
+                }
+
+                await _hubContext.Clients.All.SendAsync("ShowLog", $"ReplyMessageAsync After");
             }
             catch (Exception e)
             {
-                result.Add(new TextMessage($"Error, {e.ToString()}"));
+                await _hubContext.Clients.All.SendAsync("ShowLog", $"Error in LineBotApp: {e.ToString()}");
             }
+        }
+    }
 
-            await _messagingClient.ReplyMessageAsync(ev.ReplyToken, result);
+    public class MyCamelCaseJsonSerializerSettings : JsonSerializerSettings
+    {
+        public MyCamelCaseJsonSerializerSettings()
+        {
+            ContractResolver = new CamelCasePropertyNamesContractResolver();
+            Converters.Add(new StringEnumConverter { CamelCaseText = true });
+            NullValueHandling = NullValueHandling.Ignore;
         }
     }
 }

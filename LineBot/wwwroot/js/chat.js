@@ -24,6 +24,10 @@ connection.on("InsertVideo", function (link) {
     insertVideo(youtubeId);
 });
 
+connection.on("ShowLog", function (errorMsg) {
+    console.log('ShowLog', errorMsg);
+});
+
 connection.start().then(function () {
 }).catch(function (err) {
     return console.error(err.toString());

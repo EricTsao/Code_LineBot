@@ -26,10 +26,10 @@ namespace LineBot.Models
             }
 
             var xLineSignature = request.Headers["X-Line-Signature"].ToString();
-            if (string.IsNullOrEmpty(xLineSignature) || !VerifySignature(channelSecret, xLineSignature, content))
-            {
-                throw new InvalidSignatureException("Signature validation faild.");
-            }
+            //if (string.IsNullOrEmpty(xLineSignature) || !VerifySignature(channelSecret, xLineSignature, content))
+            //{
+            //    throw new InvalidSignatureException("Signature validation faild.");
+            //}
 
             dynamic json = JsonConvert.DeserializeObject(content);
 

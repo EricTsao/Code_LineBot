@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Line.Messaging;
 using LineBot.Hubs;
@@ -9,6 +11,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
 
 namespace LineBot.Controllers
 {
@@ -37,6 +40,15 @@ namespace LineBot.Controllers
         {
             try
             {
+                //var content = "";
+
+                //using (var reader = new StreamReader(_httpContext.Request.Body))
+                //{
+                //    content = await reader.ReadToEndAsync();
+                //}
+
+                //await _hubContext.Clients.All.SendAsync("ShowLog", $"Request: Content: {content}");
+
                 var events = await _httpContext.Request.GetWebhookEventsAsync(_lineBotConfig.ChannelSecret);
                 var lineMessagingClient = new LineMessagingClient(_lineBotConfig.AccessToken);
                 var lineBotApp = new LineBotApp(lineMessagingClient, _hubContext);
@@ -46,13 +58,26 @@ namespace LineBot.Controllers
             {
                 //需要 Log 可自行加入
                 //_logger.LogError(JsonConvert.SerializeObject(ex));
+                await _hubContext.Clients.All.SendAsync("ShowLog", $"Error in LineBotController.Run: {ex.ToString()}");
             }
             return Ok();
         }
 
         [HttpGet("Check")]
+        [HttpPost("Check")]
         public async Task<IActionResult> Check()
         {
+            try
+            {
+                await _hubContext.Clients.All.SendAsync("ShowLog", $"LineBotController.Check");
+
+                throw new Exception("出錯囉");
+            }
+            catch (Exception e)
+            {
+                await _hubContext.Clients.All.SendAsync("ShowLog", $"Error in LineBotController.Check: {e.ToString()}");
+            }
+
             return Ok();
         }
     }
